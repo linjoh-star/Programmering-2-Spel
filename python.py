@@ -2,6 +2,7 @@ import pygame
 import random
 import os
 import colorsys
+import math
 
 # Initialize Pygame
 pygame.init()
@@ -110,9 +111,12 @@ class Enemy:
 class Bullet:
     def __init__(self, x, y, target_x, target_y):
         self.rect = pygame.Rect(x, y, 10, 10)
+        self.x = x + 20
+        self.y = y + 20
         self.target_x = target_x
         self.target_y = target_y
         self.image = BULLET 
+        self.k = (target_y - y)/(target_x - x)
 
 class Game:
     def __init__(self):
@@ -172,6 +176,11 @@ class Game:
                     collectible.spawn()
 
             for bullet in self.bullets:
+                x = 10 * 1 if (bullet.target_x - bullet.x) > 0 else -1
+                y = (bullet.rect.x - bullet.x)* bullet.k
+
+                bullet.rect.x += x 
+                bullet.rect.y = bullet.y + y 
 
 
         self.frame += 1
