@@ -117,6 +117,8 @@ class Bullet:
         self.target_y = target_y
         self.image = BULLET 
         self.k = (target_y - y)/(target_x - x)
+        self.direction = None
+        self.fired = False
 
 class Game:
     def __init__(self):
@@ -176,11 +178,19 @@ class Game:
                     collectible.spawn()
 
             for bullet in self.bullets:
-                x = 10 * 1 if (bullet.target_x - bullet.x) > 0 else -1
-                y = (bullet.rect.x - bullet.x)* bullet.k
+                if not bullet.fired:
+                    bullet_pos = (bullet.rect.x, bullet.rect.y)
+                    cursor_pos = pygame.mouse.get_pos()
+                    dx = cursor_pos[0] - bullet_pos[0]
+                    dy = cursor_pos[1] - bullet_pos[1]
+                    angle = math.atan2(dy, dx) * 180 / math.pi
+                    rad_angle = math.radians(angle)
+                    bullet.direction = [math.cos(rad_angle), math.sin(rad_angle)]
+                    bullet.fired = True
+                speed = 10
+                bullet.rect.x += bullet.direction[0] * speed
+                bullet.rect.y += bullet.direction[1] * speed
 
-                bullet.rect.x += x 
-                bullet.rect.y = bullet.y + y 
 
 
         self.frame += 1
