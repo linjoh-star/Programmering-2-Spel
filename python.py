@@ -4,6 +4,7 @@ import os
 import colorsys
 import math
 
+
 # Initialize Pygame
 pygame.init()
 cwd = os.getcwd()
@@ -47,11 +48,19 @@ class Collectible:
 
 
 class Score:
-    def __init__(self, text, x, y, width=200, height=50, color=(255, 255, 255), text_color=(0, 0, 0)):
-        self.text = text
+    def __init__(self, x, y):
+        self.value = 0
         self.x = x
         self.y = y
-        text_surf = FONT.render(text, True, text_color)
+        self.font = pygame.font.SysFont("Arial", 30)
+
+    def increase(self, amount=1):
+        self.value += amount
+
+    def draw(self, surface):
+        text_surf = self.font.render("Score: " + str(self.value), True, (255, 255, 255))
+        surface.blit(text_surf, (self.x, self.y))
+
 
 
 class Button:
@@ -108,6 +117,13 @@ class Enemy:
             self.rect.left = 0
             self.rect.top = random.randint(0, screen_height - self.rect.height)
 
+    def check_collision(self, bullets):
+        for bullet in bullets:
+            if self.rect.colliderect(bullet.rect):
+                bullets.remove(bullet)
+                return True
+        return False
+
 class Bullet:
     def __init__(self, x, y, target_x, target_y):
         self.rect = pygame.Rect(x, y, 10, 10)
@@ -125,9 +141,10 @@ class Game:
         self.clock = pygame.time.Clock()
         self.player = Player(screen_width // 2 - 25, screen_height - 60)
         self.enemies = [Enemy(random.randint(0, screen_width - 30), random.randint(0, screen_height // 2), xvel=1)
-                        for _ in range(3)] + [Enemy(random.randint(0, screen_width - 30), random.randint(0, screen_height // 2), yvel=1)
-                                              for _ in range(3)] + [Enemy(random.randint(0, screen_width - 30), random.randint(0, screen_height // 2), yvel=1, xvel=1)
-                                                                    for _ in range(3)]
+                        for _ in range(2)] + [Enemy(random.randint(0, screen_width - 30), random.randint(0, screen_height // 2), yvel=1)
+                                              for _ in range(2)] + [Enemy(random.randint(0, screen_width - 30), random.randint(0, screen_height // 2), yvel=1, xvel=1)
+                                                                    for _ in range(2)]
+        self.score = Score(10, 10)
         self.start_button = Button(
             "Start", screen_width // 2 - 100, screen_height // 2)
         self.end_button = Button(
@@ -139,6 +156,8 @@ class Game:
         self.collectibles = [Collectible(random.randint(0, screen_width - 30), random.randint(0, screen_height - 30))
                              for _ in range(5)]
         self.bullets = []
+
+    
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -163,19 +182,22 @@ class Game:
         if self.game_state == "playing":
             for enemy in self.enemies:
                 color = colorsys.hls_to_rgb((self.frame % 100) / 100, 0.5, 1)
-                enemy.image.fill(
-                    (color[0] * 255, color[1] * 255, color[2] * 255))
+                enemy.image.fill((color[0] * 255, color[1] * 255, color[2] * 255))
                 enemy.move(screen_width, screen_height)
                 if enemy.rect.colliderect(self.player.rect):
                     self.player.lives -= 1
                     if self.player.lives == 0:
                         self.show_end_screen = True
+                if enemy.check_collision(self.bullets):
+                    self.enemies.remove(enemy)  # Remove enemy when hit by a bullet
+
             if not self.enemies:
                 self.show_end_screen = True
             
             for collectible in self.collectibles:
                 if self.player.rect.colliderect(collectible):
                     collectible.spawn()
+                    self.score.increase(10)
 
             for bullet in self.bullets:
                 if not bullet.fired:
@@ -202,6 +224,7 @@ class Game:
         elif self.game_state == "playing":
             screen.blit(BACKGROUND_IMAGE, (0, 0))
             screen.blit(self.player.image, self.player.rect)
+            self.score.draw(screen)
             for enemy in self.enemies:
                 screen.blit(enemy.image, enemy.rect)
 
@@ -226,6 +249,7 @@ class Game:
                                                                     for _ in range(3)]
         self.show_end_screen = False
         self.game_state = "playing"
+        self.score = Score(10, 10)
 
     def run(self):
         while self.running:
