@@ -209,7 +209,10 @@ class Game:
                     rad_angle = math.radians(angle)
                     bullet.direction = [math.cos(rad_angle), math.sin(rad_angle)]
                     bullet.fired = True
+                
                 speed = 10
+                if self.score.value > 100:
+                    speed = 2 * speed
                 bullet.rect.x += bullet.direction[0] * speed
                 bullet.rect.y += bullet.direction[1] * speed
 
