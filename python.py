@@ -211,7 +211,7 @@ class Game:
                     bullet.fired = True
                 
                 speed = 10
-                if self.score.value > 100:
+                if self.score.value >= 100:
                     speed = 2 * speed
                 bullet.rect.x += bullet.direction[0] * speed
                 bullet.rect.y += bullet.direction[1] * speed
