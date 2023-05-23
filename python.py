@@ -10,7 +10,6 @@ pygame.init()
 cwd = os.getcwd()
 pygame.mixer.init()
 
-
 screen_width = 800
 screen_height = 800
 screen = pygame.display.set_mode((screen_width, screen_height))
@@ -78,29 +77,27 @@ class Button:
     def draw(self, surface):
         surface.blit(self.surface, self.rect)
 
-
 class Player:
     def __init__(self, x, y, width=40, height=40, speed=4, lives=3):
         self.rect = pygame.Rect(x, y, width, height)
         self.image = PLAYER_LEFT
         self.speed = speed
         self.lives = lives
+        self.should_play_walk = True
+
 
     def move(self, keys, screen_width, screen_height):
+
         if keys[pygame.K_w] and self.rect.top > 0:
             self.rect.top -= self.speed
-            move_sound.play()
         if keys[pygame.K_s] and self.rect.bottom < screen_height:
             self.rect.bottom += self.speed
-            move_sound.play()
         if keys[pygame.K_a] and self.rect.left > 0:
             self.rect.left -= self.speed
             self.image = PLAYER_LEFT
-            move_sound.play()
         if keys[pygame.K_d] and self.rect.right < screen_width:
             self.rect.right += self.speed
             self.image = PLAYER_RIGHT
-            move_sound.play()
 
 class Enemy:
     def __init__(self, x, y, width=50, height=50, speed=1, xvel=0, yvel=0):
@@ -179,10 +176,17 @@ class Game:
                 elif self.game_state == "playing":
                     print(mouse_pos)
                     self.bullets.append(Bullet(self.player.rect.x, self.player.rect.y, mouse_pos[0], mouse_pos[1]))
+            if event.type == pygame.KEYUP:
+                if event.key in [pygame.K_a, pygame.K_s, pygame.K_d, pygame.K_w]:
+                    move_sound.stop()
+                    move_sound.play(loops=0)
 
         if self.game_state == "playing":
             keys = pygame.key.get_pressed()
             self.player.move(keys, screen_width, screen_height)
+
+
+
         
 
     def update(self):
