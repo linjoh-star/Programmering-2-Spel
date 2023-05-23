@@ -3,22 +3,21 @@ import random
 import os
 import colorsys
 import math
+import pygame.mixer
 
 
-# Initialize Pygame
 pygame.init()
 cwd = os.getcwd()
+pygame.mixer.init()
 
-# Set up the display
+
 screen_width = 800
 screen_height = 800
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("2D-Game")
 
-# Set up the fonts
 FONT = pygame.font.SysFont("Arial", 30)
 
-# Load background image
 file_path = os.path.join("background.png")
 file_path1 = os.path.join("blaha.png")
 file_path2 = os.path.join("pixil-frame-0.png")
@@ -34,8 +33,12 @@ PLAYER_RIGHT = pygame.transform.scale(PLAYER_RIGHT, (100, 100))
 PLAYER_LEFT = pygame.transform.scale(PLAYER_LEFT, (100, 100))
 NOT_RACIST_COLLECTABLE = pygame.transform.scale(PLAYER_RIGHT, (100, 100))
 BULLET = pygame.transform.scale(PLAYER_LEFT, (10, 10))
-
-
+move_sound = pygame.mixer.Sound("move.mp3")
+move_sound.set_volume(0.1)
+collect_sound = pygame.mixer.Sound("collect.mp3")
+collide_sound = pygame.mixer.Sound("collide.mp3")
+move_channel = pygame.mixer.Channel(0)
+collect_channel = pygame.mixer.Channel(1)
 class Collectible:
     def __init__(self, x, y, width=30, height=30, image_path="collectible.png"):
         self.rect = pygame.Rect(x, y, width, height)
@@ -83,20 +86,21 @@ class Player:
         self.speed = speed
         self.lives = lives
 
-
     def move(self, keys, screen_width, screen_height):
         if keys[pygame.K_w] and self.rect.top > 0:
             self.rect.top -= self.speed
+            move_sound.play()
         if keys[pygame.K_s] and self.rect.bottom < screen_height:
             self.rect.bottom += self.speed
+            move_sound.play()
         if keys[pygame.K_a] and self.rect.left > 0:
             self.rect.left -= self.speed
             self.image = PLAYER_LEFT
+            move_sound.play()
         if keys[pygame.K_d] and self.rect.right < screen_width:
             self.rect.right += self.speed
             self.image = PLAYER_RIGHT
-        pygame.display.flip()
-
+            move_sound.play()
 
 class Enemy:
     def __init__(self, x, y, width=50, height=50, speed=1, xvel=0, yvel=0):
@@ -121,6 +125,7 @@ class Enemy:
         for bullet in bullets:
             if self.rect.colliderect(bullet.rect):
                 bullets.remove(bullet)
+                self.destroyed = True
                 return True
         return False
 
@@ -156,7 +161,9 @@ class Game:
         self.collectibles = [Collectible(random.randint(0, screen_width - 30), random.randint(0, screen_height - 30))
                              for _ in range(5)]
         self.bullets = []
-
+        move_sound = pygame.mixer.Sound("move.mp3")
+        collect_sound = pygame.mixer.Sound("collect.mp3")
+        collide_sound = pygame.mixer.Sound("collide.mp3")
     
 
     def handle_events(self):
@@ -189,7 +196,7 @@ class Game:
                     if self.player.lives == 0:
                         self.show_end_screen = True
                 if enemy.check_collision(self.bullets):
-                    self.enemies.remove(enemy)  # Remove enemy when hit by a bullet
+                    self.enemies.remove(enemy) 
 
             if not self.enemies:
                 self.show_end_screen = True
@@ -198,6 +205,7 @@ class Game:
                 if self.player.rect.colliderect(collectible):
                     collectible.spawn()
                     self.score.increase(10)
+                    collect_sound.play()
 
             for bullet in self.bullets:
                 if not bullet.fired:
